@@ -1,0 +1,62 @@
+function openEditor(type) {
+    const editors = document.querySelectorAll('.editor');
+    const tabs = document.querySelectorAll('.tab');
+    editors.forEach(editor => editor.classList.remove('active'));
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    document.getElementById(`${type}Editor`).classList.add('active');
+    document.querySelector(`.tab[onclick="openEditor('${type}')"]`).classList.add('active');
+}
+
+function updateIframe() {
+    const htmlContent = document.getElementById('htmlEditor').value;
+    const cssContent = `<style>${document.getElementById('cssEditor').value}</style>`;
+    const jsContent = `<script>${document.getElementById('jsEditor').value}<\/script>`;
+    const iframe = document.getElementById('output');
+
+    iframe.srcdoc = `${htmlContent}${cssContent}${jsContent}`;
+}
+
+function saveCode() {
+    const fileNumber = document.getElementById('fileNumber').value || '1';
+    const htmlContent = document.getElementById('htmlEditor').value;
+    const cssContent = document.getElementById('cssEditor').value;
+    const jsContent = document.getElementById('jsEditor').value;
+
+    const codeObject = {
+        html: htmlContent,
+        css: cssContent,
+        js: jsContent
+    };
+
+    const blob = new Blob([JSON.stringify(codeObject, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `save${fileNumber}.phh`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function loadFile(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const codeObject = JSON.parse(e.target.result);
+            document.getElementById('htmlEditor').value = codeObject.html || '';
+            document.getElementById('cssEditor').value = codeObject.css || '';
+            document.getElementById('jsEditor').value = codeObject.js || '';
+            updateIframe();
+        };
+        reader.readAsText(file);
+    } else {
+        alert('Por favor, selecione um arquivo .phh válido.');
+    }
+}
+
+// Load code on page load if there's a file number in the input
+document.addEventListener('DOMContentLoaded', () => {
+    const fileNumber = document.getElementById('fileNumber').value || '1';
+    loadCode(fileNumber);
+});
